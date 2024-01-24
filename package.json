@@ -8,7 +8,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
-    "start": "node server.js""
+    "start": "node server.js"
   },
   "author": "Kakulukian",
   "keywords": [
