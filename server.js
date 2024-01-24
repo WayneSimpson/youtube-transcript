@@ -1,14 +1,27 @@
+// Load environment variables from .env file
+const dotenv = require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Assuming you have a function to fetch transcripts in src/index.ts
-// You might need to adjust this import based on how you compile your TypeScript
-const { getTranscript } = require('./dist/youtube-transcript.common.js');
+// Import the YoutubeTranscript class from the compiled JavaScript
+const { YoutubeTranscript } = require('./dist/youtube-transcript.common.js');
+
+function checkApiKey(req, res, next) {
+  const requestApiKey = req.headers['x-api-key'] || req.headers['X-API-KEY'];
+  console.log(`Received API Key`);
+  
+  if (!requestApiKey || requestApiKey !== process.env.MY_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid API key' });
+  }
+  next();
+}
 
 app.use(express.json()); // For parsing application/json
 
-app.get('/transcript', async (req, res) => {
+// Apply the API key check middleware to the /transcript route
+app.get('/transcript', checkApiKey, async (req, res) => {
   const videoId = req.query.videoId;
 
   if (!videoId) {
@@ -16,10 +29,10 @@ app.get('/transcript', async (req, res) => {
   }
 
   try {
-    const transcript = await getTranscript(videoId);
+    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
     res.json(transcript);
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    res.status(500).send({ error: error.message || 'An error occurred while fetching the transcript.' });
   }
 });
 
